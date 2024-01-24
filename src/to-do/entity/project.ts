@@ -4,7 +4,7 @@ import { Task } from './task';
 
 @Entity()
 export class Project extends Basic {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn('increment')
   id: number;
 
   @Column()

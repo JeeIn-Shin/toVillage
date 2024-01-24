@@ -21,7 +21,10 @@ import config from '../config/configuration';
       password: config().database.pwd,
       database: 'tovillage',
       entities: [Project, Task, Subtask],
-      synchronize: true,
+      //true시 QueryFailedError: Encoding not recognized: 'undefined' (searched as: 'undefined') 에러 발생
+      //synchronize가 대체 무슨 옵션인가
+      synchronize: false,
+      logging: true,
     }),
     toDoModule,
   ],
