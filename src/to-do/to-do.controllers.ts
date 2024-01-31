@@ -2,14 +2,19 @@ import {
   Controller,
   Get,
   Post,
-  //Put,
-  //Delete,
+  Put,
+  Delete,
   Param,
   Body,
   ParseIntPipe,
 } from '@nestjs/common';
 import { ProjectService } from './to-do.service';
 import { Project } from './entity';
+
+// interface projectData {
+//   toDo: string;
+//   done: number;
+// }
 
 @Controller('to-do')
 export class ProjectsController {
@@ -33,7 +38,19 @@ export class ProjectsController {
     return this.projectService.addNewProject(project.toDo);
   }
 
-  //@Put('')
+  //done이 0이나 1인지 체크해야함 --> dto ?
+  @Put(':id')
+  modifyProject(
+    @Param('id', ParseIntPipe) id: number,
+    @Body('project') project: { toDo: string; done: number },
+  ): Promise<Project | null> {
+    return this.projectService.modifyProject(id, project);
+  }
 
-  //@Delete('')
+  @Delete(':id')
+  deleteProject(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<Project | null> {
+    return this.projectService.deleteProject(id);
+  }
 }
