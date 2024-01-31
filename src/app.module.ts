@@ -1,10 +1,11 @@
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { toDoModule } from './to-do/to-do.modules';
 import { Project, Task, Subtask } from './to-do/entity';
+import { LoggerMiddleware } from 'middleware/logger.middleware';
 import config from '../config/configuration';
 
 @Module({
@@ -31,4 +32,8 @@ import config from '../config/configuration';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(LoggerMiddleware).forRoutes('*'); // 모든 경로에 미들웨어 적용
+  }
+}
