@@ -57,6 +57,16 @@ $ pnpm run test:e2e
 # test coverage
 $ pnpm run test:cov
 ```
+## 개선점
+문제: project, task, subtask의 id가 모두 동일함
+==> 조회, 삽입, 수정, 삭제의 문제가 발생할 것
+==> 그 예로, 삽입시 데이터 삽입 시 project, task, subtask 한번에 입력해야함
+
+해결방안: project, task, subtask 각각의 id 규칙이 필요함
+==> 어떻게 해야하는가? 어떤 방법이 가장 효율적인가?
+==> 삽입시 body를 요청받은 데이터를 토대로, (상위)id에 따라 어느 entity에 삽입해야하는지  판단하여 데이터 입력할 수 있게 조정해야함
+
+삭제의 경우 soft delete, hard delete가 있음 이는 어떻게 할 것인가?
 
 ## Support
 

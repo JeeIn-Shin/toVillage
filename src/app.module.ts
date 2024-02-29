@@ -3,7 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { toDoModule } from './to-do/to-do.modules';
+import { TodosModule } from './to-do/todo.modules';
 import { Project, Task, Subtask } from './to-do/entity';
 import { LoggerMiddleware } from 'middleware/logger.middleware';
 import config from '../config/configuration';
@@ -20,14 +20,14 @@ import config from '../config/configuration';
       port: config().database.port,
       username: config().database.user,
       password: config().database.pwd,
-      database: 'tovillage',
+      database: 'tovillage2',
       entities: [Project, Task, Subtask],
       //true시 QueryFailedError: Encoding not recognized: 'undefined' (searched as: 'undefined') 에러 발생
       //synchronize가 대체 무슨 옵션인가
-      synchronize: false,
+      synchronize: true,
       logging: true,
     }),
-    toDoModule,
+    TodosModule,
   ],
   controllers: [AppController],
   providers: [AppService],
