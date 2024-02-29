@@ -1,17 +1,17 @@
-import {
-  Entity,
-  Column,
-  PrimaryGeneratedColumn,
-  JoinColumn,
-  ManyToOne,
-} from 'typeorm';
-import { Basic } from './basic';
+// subtask.entity.ts
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 import { Task } from './task';
 
 @Entity()
-export class Subtask extends Basic {
+export class Subtask {
   @PrimaryGeneratedColumn()
   id: number;
+
+  @Column()
+  taskId: number;
+
+  @Column()
+  projectId: number;
 
   @Column()
   toDo: string;
@@ -19,7 +19,6 @@ export class Subtask extends Basic {
   @Column({ default: 0 })
   done: number;
 
-  @ManyToOne(() => Task, (task) => task.id)
-  @JoinColumn({ name: 'id' })
-  taskId: Task;
+  @ManyToOne(() => Task, (task) => task.subtasks)
+  task: Task;
 }

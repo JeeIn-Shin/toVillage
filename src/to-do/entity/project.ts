@@ -1,10 +1,10 @@
-import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
-import { Basic } from './basic';
+// project.entity.ts
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { Task } from './task';
 
 @Entity()
-export class Project extends Basic {
-  @PrimaryGeneratedColumn('increment')
+export class Project {
+  @PrimaryGeneratedColumn()
   id: number;
 
   @Column()
@@ -13,6 +13,6 @@ export class Project extends Basic {
   @Column({ default: 0 })
   done: number;
 
-  @OneToMany(() => Task, (task) => task.projectId)
-  task: Task[];
+  @OneToMany(() => Task, (task) => task.project)
+  tasks: Task[];
 }
