@@ -20,7 +20,7 @@ import config from '../config/configuration';
       port: config().database.port,
       username: config().database.user,
       password: config().database.pwd,
-      database: 'tovillage2',
+      database: 'tovillage',
       entities: [Project, Task, Subtask],
       //true시 QueryFailedError: Encoding not recognized: 'undefined' (searched as: 'undefined') 에러 발생
       //synchronize가 대체 무슨 옵션인가

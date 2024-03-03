@@ -62,5 +62,6 @@ export class todoFormtDto {
 
   @ValidateNested()
   @Type(() => TaskDto)
-  task: TaskDto;
+  @IsOptional()
+  task?: TaskDto;
 }

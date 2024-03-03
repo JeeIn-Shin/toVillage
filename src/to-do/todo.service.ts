@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Project, Task, Subtask } from './entity';
-import { todoFormtDto } from './dto/to-do.dto';
+import { todoFormtDto } from './dto/todo.dto';
+import { updateTodoDto } from './dto/update-todo.dto';
 
 //project, project-task, project-task-subtask 3가지로 나누어야함
 @Injectable()
@@ -130,7 +131,7 @@ export class TodosService {
       taskId: newTaskEntity.id, // 참조
       projectId: newTaskEntity.projectId,
     });
-    console.log(newSubTaskEntity);
+
     await this.SubTasksRepository.save(newSubTaskEntity);
 
     const savedProject = await this.ProjectsRepository.findOne({
@@ -156,43 +157,95 @@ export class TodosService {
     };
   }
 
-  // async modifyTodo(
-  //   todoId: number,
-  //   updatedTodo: todoFormtDto,
-  // ): Promise<any[] | null> {
-  //   await this.ProjectsRepository.createQueryBuilder()
-  //     .update(Task)
-  //     .set({
-  //       toDo: updatedTodo.project,
-  //       done: updatedTodo.done,
-  //     })
-  //     .where(`id = :id`, { id: todoId })
-  //     .execute();
+  async modifyTodo(
+    todoId: number,
+    updatedTodo: updateTodoDto, //수정하고자하는 내용 -- 이름을 이렇게 짓는게 맞나?
+  ): Promise<updateTodoDto | null> {
+    //id 값을 따라, 어떤 테이블의 데이터를 수정할 건지 구분함
+    // project: 0,000,000~1,999,999
+    // task: 2,000,000~5,999,999
+    // subtask: 6,000,000~9,999,999
 
-  //   await this.TasksRepository.createQueryBuilder()
-  //     .update(Task)
-  //     .set({
-  //       toDo: updatedTodo.task.toDo,
-  //       done: updatedTodo.task.done,
-  //     })
-  //     .where(`id = :id`, { id: todoId })
-  //     .execute();
+    //반환은 어떻게 하는게 좋을려나
+    //수정하자마자, 분기점에서 해당 (project id)를 가지고 있는 해당 todo table 데이터를 바로 return
 
-  //   await this.SubTasksRepository.createQueryBuilder()
-  //     .update(Task)
-  //     .set({
-  //       toDo: updatedTodo.task.subtask.toDo,
-  //       done: updatedTodo.task.subtask.done,
-  //     })
-  //     .where(`id = :id`, { id: todoId })
-  //     .execute();
+    //특정 id에 해당하는 값이 없을 경우도 고려해야함***
+    if (todoId <= 1999999) {
+      await this.ProjectsRepository.createQueryBuilder()
+        .update(Project)
+        .set({
+          toDo: updatedTodo.toDo,
+          done: updatedTodo.done,
+        })
+        .where(`id = :id`, { id: todoId })
+        .execute();
 
-  //   return await this.ProjectsRepository.createQueryBuilder('project')
-  //     .innerJoin('project.task', 'task')
-  //     .innerJoin('project.subtask', 'subtask')
-  //     .where(`project.id = :id`, { id: todoId })
-  //     .getRawMany();
-  // }
+      const updatedData = await this.ProjectsRepository.find({
+        where: {
+          id: todoId,
+        },
+      });
+
+      const updatedProject: updateTodoDto = {
+        id: updatedData[0].id,
+        toDo: updatedData[0].toDo,
+        done: updatedData[0].done,
+      };
+
+      return updatedProject;
+    }
+
+    if (todoId >= 2000000 || todoId <= 5999999) {
+      await this.ProjectsRepository.createQueryBuilder()
+        .update(Task)
+        .set({
+          toDo: updatedTodo.toDo,
+          done: updatedTodo.done,
+        })
+        .where(`id = :id`, { id: todoId })
+        .execute();
+
+      const updatedData = await this.TasksRepository.find({
+        where: {
+          id: todoId,
+        },
+      });
+
+      const updatedTask: updateTodoDto = {
+        id: updatedData[0].id,
+        toDo: updatedData[0].toDo,
+        done: updatedData[0].done,
+      };
+
+      return updatedTask;
+    }
+    if (todoId >= 6000000 || todoId <= 9999999) {
+      await this.ProjectsRepository.createQueryBuilder()
+        .update(Subtask)
+        .set({
+          toDo: updatedTodo.toDo,
+          done: updatedTodo.done,
+        })
+        .where(`id = :id`, { id: todoId })
+        .execute();
+
+      const updatedData = await this.TasksRepository.find({
+        where: {
+          id: todoId,
+        },
+      });
+
+      const updatedSubtask: updateTodoDto = {
+        id: updatedData[0].id,
+        toDo: updatedData[0].toDo,
+        done: updatedData[0].done,
+      };
+
+      return updatedSubtask;
+    }
+
+    return null;
+  }
 
   // async deleteTodo(taskId: number): Promise<Task> {
   //   const targetTask = await this.TasksRepository.findOne({

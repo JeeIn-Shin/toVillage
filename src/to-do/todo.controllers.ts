@@ -2,7 +2,7 @@ import {
   Get,
   Controller,
   Post,
-  //Put,
+  Put,
   //Delete,
   Param,
   Body,
@@ -10,7 +10,8 @@ import {
 } from '@nestjs/common';
 import { TodosService } from './todo.service';
 //import { Task } from './entity';
-import { todoFormtDto } from './dto/to-do.dto';
+import { todoFormtDto } from './dto/todo.dto';
+import { updateTodoDto } from './dto/update-todo.dto';
 //project, project-task, project-task-subtask 3가지로 나누어야함
 @Controller('to-do')
 export class TodosController {
@@ -33,13 +34,14 @@ export class TodosController {
   addNewTodo(@Body() todo: todoFormtDto): Promise<any> {
     return this.todoService.addNewTodo(todo);
   }
-  // @Put(':id')
-  // modifyTodo(
-  //   @Param('id', ParseIntPipe) id: number,
-  //   @Body() todo: todoFormtDto,
-  // ): Promise<any[]> {
-  //   return this.todoService.modifyTodo(id, todo);
-  // }
+
+  @Put(':id')
+  modifyTodo(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() todo: updateTodoDto,
+  ): Promise<todoFormtDto | null> {
+    return this.todoService.modifyTodo(id, todo);
+  }
 
   // @Delete(':id')
   // deleteTodo(@Param('id', ParseIntPipe) id: number): Promise<Task | null> {
