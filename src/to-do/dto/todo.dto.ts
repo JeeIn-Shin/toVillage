@@ -48,7 +48,7 @@ class TaskDto {
   subtask?: SubtaskDto;
 }
 
-export class todoFormtDto {
+export class TodoDto {
   @IsNumber()
   id: number;
 

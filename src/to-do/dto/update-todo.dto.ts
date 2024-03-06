@@ -1,13 +1,6 @@
-import {
-  IsNumber,
-  IsString,
-  //IsEmpty,
-  IsNotEmpty,
-  Min,
-  Max,
-} from 'class-validator';
+import { IsNumber, IsNotEmpty, IsString, Min, Max } from 'class-validator';
 
-export class updateTodoDto {
+export class UpdateTodoDto {
   @IsNumber()
   @IsNotEmpty()
   @Min(0)

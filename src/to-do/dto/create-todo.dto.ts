@@ -1,12 +1,12 @@
-import { IsNumber, IsString, IsEmpty, Min, Max } from 'class-validator';
+import { IsString, IsNumber, Min, Max } from 'class-validator';
 
-export class createTodoDto {
+export class CreateTodoDto {
   @IsString()
   toDo: string;
 
-  @IsEmpty()
-  @IsString()
-  deadline: string;
+  // @IsEmpty()
+  // @IsString()
+  // deadline: string;
 
   @IsNumber()
   @Min(0)
