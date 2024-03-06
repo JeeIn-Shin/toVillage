@@ -52,6 +52,6 @@ export class TodosController {
     }
     //이 부분 에러발생 페이지로 이동하게끔, 혹은 팝업창이 뜨게 하던가...
     //어떻게 처리해야할지 논의해야함
-    return { url: `http://localhost:8080` };
+    return { url: `http://localhost:8080/` };
   }
 }

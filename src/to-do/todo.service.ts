@@ -314,30 +314,33 @@ export class TodosService {
     }
 
     if (targetId >= 2000000 && targetId <= 5999999) {
+      const targetProjectId = await this.TasksRepository.find({
+        where: { id: targetId },
+        select: ['projectId'],
+      });
       try {
-        const targetProjectId = await this.TasksRepository.find({
-          where: { id: targetId },
-          select: ['projectId'],
-        });
-
-        const result = await this.TasksRepository.createQueryBuilder('task')
-          .leftJoinAndSelect('task.subtasks', 'subtask')
-          .where('id = :id', { id: targetId })
+        await queryRunner.manager
+          .createQueryBuilder()
           .delete()
+          .from(Subtask)
+          .where('taskId = :id', { id: targetId })
           .execute();
-        // 삭제된 행이 있는지 확인
-        if (result.affected === 0) {
-          return -1; // 삭제된 행이 없을 경우 -1 반환
-        }
 
-        // 삭제 성공 시
-        // subtask가 가지고 있던 projectId 반환
-        return targetProjectId[0].projectId;
+        await queryRunner.manager
+          .createQueryBuilder()
+          .delete()
+          .from(Task)
+          .where('id = :id', { id: targetId })
+          .execute();
+
+        await queryRunner.commitTransaction();
       } catch (error) {
-        console.error('삭제 중 오류 발생:', error);
-        return error; // 삭제 중 오류 발생 시 -1 반환
+        await queryRunner.rollbackTransaction();
+        throw error;
+      } finally {
+        await queryRunner.release();
+        return targetProjectId[0].projectId;
       }
-      //targetTask가 삭제된 project 반환
     }
 
     if (targetId >= 6000000 && targetId <= 9999999) {
