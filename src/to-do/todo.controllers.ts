@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { TodosService } from './todo.service';
 //import { Task } from './entity';
-import { TodoDto, UpdateTodoDto } from './dto';
+import { TodoDto, CreateTodoDto, UpdateTodoDto } from './dto';
 //project, project-task, project-task-subtask 3가지로 나누어야함
 @Controller('to-do')
 export class TodosController {
@@ -29,7 +29,7 @@ export class TodosController {
   }
 
   @Post('')
-  addNewTodo(@Body() todo: TodoDto): Promise<any> {
+  addNewTodo(@Body() todo: CreateTodoDto): Promise<any> {
     return this.todoService.addNewTodo(todo);
   }
 

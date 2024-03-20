@@ -1,15 +1,14 @@
-import { IsString, IsNumber, Min, Max } from 'class-validator';
+import { IsEmpty, IsNumber, IsString } from 'class-validator';
 
 export class CreateTodoDto {
+  @IsEmpty()
+  @IsNumber()
+  parentId: number;
+
   @IsString()
   toDo: string;
 
   // @IsEmpty()
   // @IsString()
   // deadline: string;
-
-  @IsNumber()
-  @Min(0)
-  @Max(1)
-  done: number;
 }

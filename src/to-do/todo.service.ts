@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Repository, DataSource } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Project, Task, Subtask } from './entity';
-import { TodoDto, UpdateTodoDto } from './dto';
+import { TodoDto, CreateTodoDto, UpdateTodoDto } from './dto';
 
 //project, project-task, project-task-subtask 3가지로 나누어야함
 @Injectable()
@@ -36,7 +36,7 @@ export class TodosService {
         const processedSubtasks = subtasks.map((subtask) => ({
           id: subtask.id,
           toDo: subtask.toDo,
-          done: subtask.toDo,
+          done: subtask.done,
         }));
 
         const processedTask = {
@@ -109,53 +109,45 @@ export class TodosService {
 
   //만약 하나만 추가한다면?? ex, project만 생성한다던가...
   //현재는 project, task, subtask 모두 동시에 추가해야함
-  async addNewTodo(newEntity: TodoDto): Promise<any> {
-    //create는 생성만 하며, 저장하지 않음
-    const newProjectEntity = this.ProjectsRepository.create({
-      toDo: newEntity.toDo,
-      done: newEntity.done,
-    });
+  //어떻게 짜야하지?
+  async addNewTodo(newEntity: CreateTodoDto): Promise<any> {
+    console.log(newEntity.parentId);
+    //parent가 들어온게 없다면, project 생성
+    if (newEntity.parentId === undefined) {
+      const newProject = this.ProjectsRepository.create({
+        toDo: newEntity.toDo,
+        done: 0,
+      });
 
-    await this.ProjectsRepository.save(newProjectEntity);
+      return await this.ProjectsRepository.save(newProject);
+    }
+    //parent가 1999999 이하의 범위라면 task 생성
+    if (newEntity.parentId <= 1999999) {
+      const newTask = this.TasksRepository.create({
+        projectId: newEntity.parentId,
+        toDo: newEntity.toDo,
+        done: 0,
+      });
 
-    const newTaskEntity = this.TasksRepository.create({
-      toDo: newEntity.task.toDo,
-      done: newEntity.task.done,
-      projectId: newProjectEntity.id,
-    });
+      return await this.TasksRepository.save(newTask);
+    }
+    //parent가 2000000이상, 5999999 이하의 범위라면 subtask 생성
+    if (newEntity.parentId >= 2000000 && newEntity.parentId <= 5999999) {
+      const grandParentId = await this.TasksRepository.find({
+        where: { id: newEntity.parentId },
+        select: ['projectId'],
+        take: 1,
+      });
 
-    await this.TasksRepository.save(newTaskEntity);
+      const newSubTask = this.SubTasksRepository.create({
+        projectId: grandParentId[0].projectId,
+        taskId: newEntity.parentId,
+        toDo: newEntity.toDo,
+        done: 0,
+      });
 
-    const newSubTaskEntity = this.SubTasksRepository.create({
-      toDo: newEntity.task.subtask.toDo,
-      done: newEntity.task.subtask.done,
-      taskId: newTaskEntity.id, // 참조
-      projectId: newTaskEntity.projectId,
-    });
-
-    await this.SubTasksRepository.save(newSubTaskEntity);
-
-    const savedProject = await this.ProjectsRepository.findOne({
-      where: {
-        id: newProjectEntity.id,
-      },
-    });
-    const savedTask = await this.TasksRepository.findOne({
-      where: {
-        id: newTaskEntity.id,
-      },
-    });
-    const savedSubtask = await this.SubTasksRepository.findOne({
-      where: {
-        id: newSubTaskEntity.id,
-      },
-    });
-
-    return {
-      project: savedProject,
-      task: savedTask,
-      subtask: savedSubtask,
-    };
+      return await this.SubTasksRepository.save(newSubTask);
+    }
   }
 
   async modifyTodo(
