@@ -8,7 +8,7 @@ export class CreateTodoDto {
   @IsString()
   toDo: string;
 
-  // @IsEmpty()
-  // @IsString()
-  // deadline: string;
+  @IsEmpty()
+  @IsString()
+  deadline: string;
 }

@@ -5,6 +5,7 @@ import {
   ValidateNested,
   Min,
   Max,
+  IsEmpty,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -25,6 +26,9 @@ class SubtaskDto {
   @Min(0)
   @Max(1)
   done: number;
+
+  @IsEmpty()
+  deadline: string;
 }
 
 class TaskDto {
@@ -41,6 +45,9 @@ class TaskDto {
   @Min(0)
   @Max(1)
   done: number;
+
+  @IsEmpty()
+  deadline: string;
 
   @ValidateNested()
   @Type(() => SubtaskDto)

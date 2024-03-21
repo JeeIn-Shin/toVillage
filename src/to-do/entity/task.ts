@@ -23,6 +23,9 @@ export class Task {
   @Column({ default: 0 })
   done: number;
 
+  @Column()
+  deadline: string;
+
   @ManyToOne(() => Project, (project) => project.tasks)
   project: Project;
 

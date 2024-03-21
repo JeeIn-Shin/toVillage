@@ -37,12 +37,14 @@ export class TodosService {
           id: subtask.id,
           toDo: subtask.toDo,
           done: subtask.done,
+          deadline: subtask.deadline,
         }));
 
         const processedTask = {
           id: task.id,
           toDo: task.toDo,
           done: task.done,
+          deadline: task.deadline,
           subtasks: processedSubtasks,
         };
 
@@ -86,12 +88,14 @@ export class TodosService {
         id: subtask.id,
         toDo: subtask.toDo,
         done: subtask.done,
+        deadline: subtask.deadline,
       }));
 
       const processedTask = {
         id: task.id,
         toDo: task.toDo,
         done: task.done,
+        deadline: task.deadline,
         subtasks: processedSubtasks,
       };
 
@@ -126,7 +130,8 @@ export class TodosService {
       const newTask = this.TasksRepository.create({
         projectId: newEntity.parentId,
         toDo: newEntity.toDo,
-        done: 0,
+        //done: 0,
+        deadline: newEntity.deadline,
       });
 
       return await this.TasksRepository.save(newTask);
@@ -143,7 +148,8 @@ export class TodosService {
         projectId: grandParentId[0].projectId,
         taskId: newEntity.parentId,
         toDo: newEntity.toDo,
-        done: 0,
+        //done: 0,
+        deadline: newEntity.deadline,
       });
 
       return await this.SubTasksRepository.save(newSubTask);
@@ -183,17 +189,19 @@ export class TodosService {
         id: updatedData[0].id,
         toDo: updatedData[0].toDo,
         done: updatedData[0].done,
+        deadline: undefined,
       };
 
       return updatedProject;
     }
 
     if (targetId >= 2000000 && targetId <= 5999999) {
-      await this.ProjectsRepository.createQueryBuilder()
+      await this.TasksRepository.createQueryBuilder()
         .update(Task)
         .set({
           toDo: updatedTodo.toDo,
           done: updatedTodo.done,
+          deadline: updatedTodo.deadline,
         })
         .where(`id = :id`, { id: targetId })
         .execute();
@@ -208,30 +216,33 @@ export class TodosService {
         id: updatedData[0].id,
         toDo: updatedData[0].toDo,
         done: updatedData[0].done,
+        deadline: updatedData[0].deadline,
       };
 
       return updatedTask;
     }
     if (targetId >= 6000000 && targetId <= 9999999) {
-      await this.ProjectsRepository.createQueryBuilder()
+      await this.SubTasksRepository.createQueryBuilder()
         .update(Subtask)
         .set({
           toDo: updatedTodo.toDo,
           done: updatedTodo.done,
+          deadline: updatedTodo.deadline,
         })
         .where(`id = :id`, { id: targetId })
         .execute();
 
-      const updatedData = await this.TasksRepository.find({
+      const updatedData = await this.SubTasksRepository.find({
         where: {
           id: targetId,
         },
       });
-
+      console.log(updatedData[0]);
       const updatedSubtask: UpdateTodoDto = {
         id: updatedData[0].id,
         toDo: updatedData[0].toDo,
         done: updatedData[0].done,
+        deadline: updatedData[0].deadline,
       };
 
       return updatedSubtask;

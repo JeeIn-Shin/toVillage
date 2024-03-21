@@ -19,6 +19,9 @@ export class Subtask {
   @Column({ default: 0 })
   done: number;
 
+  @Column()
+  deadline: string;
+
   @ManyToOne(() => Task, (task) => task.subtasks)
   task: Task;
 }

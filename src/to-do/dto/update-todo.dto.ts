@@ -1,4 +1,11 @@
-import { IsNumber, IsNotEmpty, IsString, Min, Max } from 'class-validator';
+import {
+  IsNumber,
+  IsNotEmpty,
+  IsEmpty,
+  IsString,
+  Min,
+  Max,
+} from 'class-validator';
 
 export class UpdateTodoDto {
   @IsNumber()
@@ -10,12 +17,12 @@ export class UpdateTodoDto {
   @IsString()
   toDo: string;
 
-  // @IsEmpty()
-  // @IsString()
-  // deadline: string;
-
   @IsNumber()
   @Min(0)
   @Max(1)
   done: number;
+
+  @IsEmpty()
+  @IsString()
+  deadline: string;
 }
