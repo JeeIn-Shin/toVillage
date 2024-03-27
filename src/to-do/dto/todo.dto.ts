@@ -29,6 +29,9 @@ class SubtaskDto {
 
   @IsEmpty()
   deadline: string;
+
+  @IsNumber()
+  indexNum: number;
 }
 
 class TaskDto {
@@ -48,6 +51,9 @@ class TaskDto {
 
   @IsEmpty()
   deadline: string;
+
+  @IsNumber()
+  indexNum: number;
 
   @ValidateNested()
   @Type(() => SubtaskDto)

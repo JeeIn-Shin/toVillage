@@ -22,6 +22,9 @@ export class Subtask {
   @Column()
   deadline: string;
 
+  @Column()
+  indexNum: number;
+
   @ManyToOne(() => Task, (task) => task.subtasks)
   task: Task;
 }

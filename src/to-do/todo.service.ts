@@ -3,6 +3,7 @@ import { Repository, DataSource } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Project, Task, Subtask } from './entity';
 import { TodoDto, CreateTodoDto, UpdateTodoDto } from './dto';
+import { DuplicateIndex } from 'src/utils';
 
 //project, project-task, project-task-subtask 3가지로 나누어야함
 @Injectable()
@@ -25,12 +26,14 @@ export class TodosService {
     for (const project of projects) {
       const tasks = await this.TasksRepository.find({
         where: { projectId: project.id },
+        order: { indexNum: 'ASC' },
       });
 
       const processedTasks = [];
       for (const task of tasks) {
         const subtasks = await this.SubTasksRepository.find({
           where: { task: { id: task.id } },
+          order: { indexNum: 'ASC' },
         });
 
         const processedSubtasks = subtasks.map((subtask) => ({
@@ -38,6 +41,7 @@ export class TodosService {
           toDo: subtask.toDo,
           done: subtask.done,
           deadline: subtask.deadline,
+          indexNum: subtask.indexNum,
         }));
 
         const processedTask = {
@@ -45,6 +49,7 @@ export class TodosService {
           toDo: task.toDo,
           done: task.done,
           deadline: task.deadline,
+          indexNum: task.indexNum,
           subtasks: processedSubtasks,
         };
 
@@ -76,12 +81,14 @@ export class TodosService {
 
     const tasks = await this.TasksRepository.find({
       where: { projectId: projectId },
+      order: { indexNum: 'ASC' }, //내림차순 추가
     });
 
     const processedTasks = [];
     for (const task of tasks) {
       const subtasks = await this.SubTasksRepository.find({
         where: { task: { id: task.id } },
+        order: { indexNum: 'ASC' }, //내림차순 추가
       });
 
       const processedSubtasks = subtasks.map((subtask) => ({
@@ -89,6 +96,7 @@ export class TodosService {
         toDo: subtask.toDo,
         done: subtask.done,
         deadline: subtask.deadline,
+        indexNum: subtask.indexNum,
       }));
 
       const processedTask = {
@@ -96,6 +104,7 @@ export class TodosService {
         toDo: task.toDo,
         done: task.done,
         deadline: task.deadline,
+        indexNum: task.indexNum,
         subtasks: processedSubtasks,
       };
 
@@ -115,26 +124,42 @@ export class TodosService {
   //현재는 project, task, subtask 모두 동시에 추가해야함
   //어떻게 짜야하지?
   async addNewTodo(newEntity: CreateTodoDto): Promise<any> {
-    console.log(newEntity.parentId);
     //parent가 들어온게 없다면, project 생성
     if (newEntity.parentId === undefined) {
       const newProject = this.ProjectsRepository.create({
         toDo: newEntity.toDo,
-        done: 0,
       });
 
       return await this.ProjectsRepository.save(newProject);
     }
     //parent가 1999999 이하의 범위라면 task 생성
     if (newEntity.parentId <= 1999999) {
-      const newTask = this.TasksRepository.create({
-        projectId: newEntity.parentId,
-        toDo: newEntity.toDo,
-        //done: 0,
-        deadline: newEntity.deadline,
+      //Task Entity에서 해당 parentId를 가지고 있는 Task(s)가 있는지 먼저 조회
+      //Task가 없다면 => indexNum = 1024
+      //Task(s)가 이미 존재한다면 indexNum = Task(s) 개수 * 1024
+      const taskCount = await this.TasksRepository.find({
+        where: { projectId: newEntity.parentId },
       });
 
-      return await this.TasksRepository.save(newTask);
+      if (taskCount.length < 1) {
+        const newTask = this.TasksRepository.create({
+          projectId: newEntity.parentId,
+          toDo: newEntity.toDo,
+          deadline: newEntity.deadline,
+          indexNum: 1024,
+        });
+
+        return await this.TasksRepository.save(newTask);
+      } else {
+        const newTask = this.TasksRepository.create({
+          projectId: newEntity.parentId,
+          toDo: newEntity.toDo,
+          deadline: newEntity.deadline,
+          indexNum: taskCount.length * 1024,
+        });
+
+        return await this.TasksRepository.save(newTask);
+      }
     }
     //parent가 2000000이상, 5999999 이하의 범위라면 subtask 생성
     if (newEntity.parentId >= 2000000 && newEntity.parentId <= 5999999) {
@@ -144,32 +169,47 @@ export class TodosService {
         take: 1,
       });
 
-      const newSubTask = this.SubTasksRepository.create({
-        projectId: grandParentId[0].projectId,
-        taskId: newEntity.parentId,
-        toDo: newEntity.toDo,
-        //done: 0,
-        deadline: newEntity.deadline,
+      //SubTask가 존재하는지 여기서 확인하는 절차를 가져야함
+      const subTaskCount = await this.SubTasksRepository.find({
+        where: { projectId: newEntity.parentId },
       });
 
-      return await this.SubTasksRepository.save(newSubTask);
+      if (subTaskCount.length < 1) {
+        const newSubTask = this.SubTasksRepository.create({
+          projectId: grandParentId[0].projectId,
+          taskId: newEntity.parentId,
+          toDo: newEntity.toDo,
+          deadline: newEntity.deadline,
+          indexNum: 1024,
+        });
+
+        return await this.SubTasksRepository.save(newSubTask);
+      } else {
+        const newSubTask = this.SubTasksRepository.create({
+          projectId: grandParentId[0].projectId,
+          taskId: newEntity.parentId,
+          toDo: newEntity.toDo,
+          deadline: newEntity.deadline,
+          indexNum: subTaskCount.length * 1024,
+        });
+
+        return await this.SubTasksRepository.save(newSubTask);
+      }
     }
   }
 
   async modifyTodo(
-    targetId: number,
     updatedTodo: UpdateTodoDto, //수정하고자하는 내용 -- 이름을 이렇게 짓는게 맞나?
   ): Promise<UpdateTodoDto | null> {
     //id 값을 따라, 어떤 테이블의 데이터를 수정할 건지 구분함
     // project: 0,000,000~1,999,999
     // task: 2,000,000~5,999,999
     // subtask: 6,000,000~9,999,999
-
+    const targetId = updatedTodo.id;
     //반환은 어떻게 하는게 좋을려나
     //수정하자마자, 분기점에서 해당 (project id)를 가지고 있는 해당 todo table 데이터를 바로 return
-
-    //특정 id에 해당하는 값이 없을 경우도 고려해야함***
     if (targetId <= 1999999) {
+      //1. 프로젝트 내용 자체를 수정하는 경우
       await this.ProjectsRepository.createQueryBuilder()
         .update(Project)
         .set({
@@ -190,11 +230,11 @@ export class TodosService {
         toDo: updatedData[0].toDo,
         done: updatedData[0].done,
         deadline: undefined,
+        indexNum: undefined,
       };
 
       return updatedProject;
     }
-
     if (targetId >= 2000000 && targetId <= 5999999) {
       await this.TasksRepository.createQueryBuilder()
         .update(Task)
@@ -202,6 +242,7 @@ export class TodosService {
           toDo: updatedTodo.toDo,
           done: updatedTodo.done,
           deadline: updatedTodo.deadline,
+          indexNum: updatedTodo.indexNum,
         })
         .where(`id = :id`, { id: targetId })
         .execute();
@@ -217,6 +258,7 @@ export class TodosService {
         toDo: updatedData[0].toDo,
         done: updatedData[0].done,
         deadline: updatedData[0].deadline,
+        indexNum: updatedData[0].indexNum,
       };
 
       return updatedTask;
@@ -228,6 +270,7 @@ export class TodosService {
           toDo: updatedTodo.toDo,
           done: updatedTodo.done,
           deadline: updatedTodo.deadline,
+          indexNum: updatedTodo.indexNum,
         })
         .where(`id = :id`, { id: targetId })
         .execute();
@@ -237,18 +280,106 @@ export class TodosService {
           id: targetId,
         },
       });
-      console.log(updatedData[0]);
+
       const updatedSubtask: UpdateTodoDto = {
         id: updatedData[0].id,
         toDo: updatedData[0].toDo,
         done: updatedData[0].done,
         deadline: updatedData[0].deadline,
+        indexNum: updatedData[0].indexNum,
       };
 
       return updatedSubtask;
     }
 
     return null;
+  }
+
+  //변경된 indexNum 받아와서, 중복된 부분이 없다면 그대로 반영, 그게 아니라면 idx 재설정
+  async modifyOrder(todo: UpdateTodoDto[]): Promise<TodoDto[] | null> {
+    const targetId = todo[0].id;
+
+    if (targetId > 1999999 && targetId < 6000000) {
+      if (DuplicateIndex.prototype.checkDuplicateIndexNum(todo)) {
+        for (const item of todo) {
+          await this.TasksRepository.createQueryBuilder()
+            .update(Task)
+            .set({ indexNum: item.indexNum })
+            .where(`id = :id`, { id: item.id })
+            .execute();
+        }
+
+        const parentId = await this.TasksRepository.find({
+          where: { id: todo[0].id },
+          select: ['projectId'],
+        });
+
+        return this.getByTodosId(parentId[0].projectId);
+      } else {
+        const parentId = await this.TasksRepository.find({
+          where: { id: todo[0].id },
+          select: ['projectId'],
+        });
+
+        const reorderTodo =
+          DuplicateIndex.prototype.avoidDuplicateIndexNum(todo);
+
+        const updateValues = reorderTodo.map((item) => ({
+          indexNum: item.indexNum,
+          id: item.id,
+        }));
+
+        for (const item of updateValues) {
+          await this.TasksRepository.createQueryBuilder()
+            .update(Task)
+            .set({ indexNum: item.indexNum })
+            .where(`id = :id`, { id: item.id })
+            .execute();
+        }
+        return this.getByTodosId(parentId[0].projectId);
+      }
+    }
+    if (targetId > 5999999 && targetId < 10000000) {
+      if (DuplicateIndex.prototype.checkDuplicateIndexNum(todo)) {
+        for (const item of todo) {
+          await this.SubTasksRepository.createQueryBuilder()
+            .update(Subtask)
+            .set({ indexNum: item.indexNum })
+            .where(`id = :id`, { id: item.id })
+            .execute();
+        }
+
+        const parentId = await this.SubTasksRepository.find({
+          where: { id: todo[0].id },
+          select: ['projectId'],
+        });
+
+        return this.getByTodosId(parentId[0].projectId);
+      } else {
+        const parentId = await this.SubTasksRepository.find({
+          where: { id: todo[0].id },
+          select: ['projectId'],
+          take: 1,
+        });
+
+        const reorderTodo =
+          DuplicateIndex.prototype.avoidDuplicateIndexNum(todo);
+
+        const updateValues = reorderTodo.map((item) => ({
+          indexNum: item.indexNum,
+          id: item.id,
+        }));
+
+        for (const item of updateValues) {
+          await this.SubTasksRepository.createQueryBuilder()
+            .update(Subtask)
+            .set({ indexNum: item.indexNum })
+            .where(`id = :id`, { id: item.id })
+            .execute();
+        }
+        return this.getByTodosId(parentId[0].projectId);
+      }
+    }
   }
 
   //id에 따라 삭제범위가 달라짐
@@ -268,7 +399,7 @@ export class TodosService {
       const check = await this.ProjectsRepository.find({
         where: { id: targetId },
       });
-      console.log(check[0]);
+
       if (check[0] === undefined) return -1;
       try {
         //아래 코드는 계속해서 외래키 관련해서 에러가 발생함

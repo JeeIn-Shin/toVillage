@@ -25,4 +25,8 @@ export class UpdateTodoDto {
   @IsEmpty()
   @IsString()
   deadline: string;
+
+  @IsNotEmpty()
+  @IsNumber()
+  indexNum: number;
 }

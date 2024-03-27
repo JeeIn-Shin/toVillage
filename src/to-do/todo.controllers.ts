@@ -33,12 +33,14 @@ export class TodosController {
     return this.todoService.addNewTodo(todo);
   }
 
-  @Put(':id')
-  modifyTodo(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() todo: UpdateTodoDto,
-  ): Promise<TodoDto | null> {
-    return this.todoService.modifyTodo(id, todo);
+  @Put('')
+  modifyTodo(@Body() todo: UpdateTodoDto): Promise<TodoDto | null> {
+    return this.todoService.modifyTodo(todo);
+  }
+
+  @Put('order')
+  modifyOrder(@Body() todo: UpdateTodoDto[]): Promise<TodoDto[]> {
+    return this.todoService.modifyOrder(todo);
   }
 
   @Delete(':id')
