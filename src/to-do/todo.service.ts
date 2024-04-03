@@ -60,6 +60,7 @@ export class TodosService {
       todos.push({
         id: project.id,
         toDo: project.toDo,
+        done: project.done,
         tasks: processedTasks,
       });
     }
@@ -114,6 +115,7 @@ export class TodosService {
     todos.push({
       id: project[0].id,
       toDo: project[0].toDo,
+      done: project[0].done,
       tasks: processedTasks,
     });
 
