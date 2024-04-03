@@ -7,11 +7,11 @@ import {
   Param,
   Body,
   ParseIntPipe,
-  Redirect,
 } from '@nestjs/common';
 import { TodosService } from './todo.service';
 //import { Task } from './entity';
 import { TodoDto, CreateTodoDto, UpdateTodoDto } from './dto';
+import { error } from 'console';
 //project, project-task, project-task-subtask 3가지로 나누어야함
 @Controller('to-do')
 export class TodosController {
@@ -44,16 +44,11 @@ export class TodosController {
   }
 
   @Delete(':id')
-  @Redirect('http://localhost:8080/to-do', 302)
   async deleteTodo(@Param('id', ParseIntPipe) id: number): Promise<any> {
     const result = await this.todoService.deleteTodo(id);
-    console.log('controller', result);
-    if (result === 1) return;
-    else if (result !== -1) {
-      return { url: `http://localhost:8080/to-do/${result}` };
-    }
-    //이 부분 에러발생 페이지로 이동하게끔, 혹은 팝업창이 뜨게 하던가...
-    //어떻게 처리해야할지 논의해야함
-    return { url: `http://localhost:8080/` };
+
+    if (result === 1) return this.getAllTodos();
+    else if (result === -1) return error;
+    else return this.getByTodosId(result);
   }
 }
