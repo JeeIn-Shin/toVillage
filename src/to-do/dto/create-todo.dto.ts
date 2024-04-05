@@ -1,5 +1,5 @@
 import {
-  IsEmpty,
+  IsOptional,
   IsNotEmpty,
   IsNumber,
   IsString,
@@ -7,18 +7,19 @@ import {
 } from 'class-validator';
 
 export class CreateTodoDto {
-  @IsEmpty()
+  @IsOptional()
   @IsNumber()
   parentId: number;
 
+  @IsNotEmpty()
   @IsString()
   toDo: string;
 
-  @IsEmpty()
+  @IsOptional()
   @IsString()
   deadline: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsHexColor()
   hexColorCode: string;
 }

@@ -1,7 +1,7 @@
 import {
   IsNumber,
   IsNotEmpty,
-  IsEmpty,
+  IsOptional,
   IsString,
   IsHexColor,
   Min,
@@ -18,19 +18,21 @@ export class UpdateTodoDto {
   @IsString()
   toDo: string;
 
+  @IsOptional()
   @IsNumber()
   @Min(0)
   @Max(1)
   done: number;
 
-  @IsEmpty()
+  @IsOptional()
   @IsString()
   deadline: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsNumber()
   indexNum: number;
 
+  @IsNotEmpty()
   @IsHexColor()
   hexColorCode: string;
 }
