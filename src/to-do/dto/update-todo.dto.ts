@@ -3,6 +3,7 @@ import {
   IsNotEmpty,
   IsEmpty,
   IsString,
+  IsHexColor,
   Min,
   Max,
 } from 'class-validator';
@@ -29,4 +30,7 @@ export class UpdateTodoDto {
   @IsNotEmpty()
   @IsNumber()
   indexNum: number;
+
+  @IsHexColor()
+  hexColorCode: string;
 }

@@ -1,4 +1,10 @@
-import { IsEmpty, IsNumber, IsString } from 'class-validator';
+import {
+  IsEmpty,
+  IsNotEmpty,
+  IsNumber,
+  IsString,
+  IsHexColor,
+} from 'class-validator';
 
 export class CreateTodoDto {
   @IsEmpty()
@@ -11,4 +17,8 @@ export class CreateTodoDto {
   @IsEmpty()
   @IsString()
   deadline: string;
+
+  @IsNotEmpty()
+  @IsHexColor()
+  hexColorCode: string;
 }

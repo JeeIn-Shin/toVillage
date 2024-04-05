@@ -25,6 +25,9 @@ export class Subtask {
   @Column()
   indexNum: number;
 
+  @Column()
+  hexColorCode: string;
+
   @ManyToOne(() => Task, (task) => task.subtasks)
   task: Task;
 }

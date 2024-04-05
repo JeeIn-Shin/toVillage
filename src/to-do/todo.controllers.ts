@@ -7,11 +7,13 @@ import {
   Param,
   Body,
   ParseIntPipe,
+  Redirect,
+  //Redirect,
 } from '@nestjs/common';
 import { TodosService } from './todo.service';
 //import { Task } from './entity';
 import { TodoDto, CreateTodoDto, UpdateTodoDto } from './dto';
-import { error } from 'console';
+
 //project, project-task, project-task-subtask 3가지로 나누어야함
 @Controller('to-do')
 export class TodosController {
@@ -44,11 +46,13 @@ export class TodosController {
   }
 
   @Delete(':id')
+  @Redirect('http://localhost:8080/to-do', 302)
   async deleteTodo(@Param('id', ParseIntPipe) id: number): Promise<any> {
     const result = await this.todoService.deleteTodo(id);
 
-    if (result === 1) return this.getAllTodos();
-    else if (result === -1) return error;
-    else return this.getByTodosId(result);
+    if (result === 1) return;
+    else if (Math.sign(result) === 1)
+      return { URL: `http://localhost:8080/to-do/${result}` };
+    else return result;
   }
 }

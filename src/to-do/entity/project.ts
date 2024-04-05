@@ -10,8 +10,8 @@ export class Project {
   @Column()
   toDo: string;
 
-  @Column({ default: 0 })
-  done: number;
+  @Column()
+  hexColorCode: string;
 
   @OneToMany(() => Task, (task) => task.project)
   tasks: Task[];

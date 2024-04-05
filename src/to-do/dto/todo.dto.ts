@@ -6,6 +6,7 @@ import {
   Min,
   Max,
   IsEmpty,
+  IsHexColor,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -32,6 +33,9 @@ class SubtaskDto {
 
   @IsNumber()
   indexNum: number;
+
+  @IsHexColor()
+  hexColorCode: string;
 }
 
 class TaskDto {
@@ -55,6 +59,9 @@ class TaskDto {
   @IsNumber()
   indexNum: number;
 
+  @IsHexColor()
+  hexColorCode: string;
+
   @ValidateNested()
   @Type(() => SubtaskDto)
   @IsOptional()
@@ -72,6 +79,9 @@ export class TodoDto {
   @Min(0)
   @Max(1)
   done: number;
+
+  @IsHexColor()
+  hexColorCode: string;
 
   @ValidateNested()
   @Type(() => TaskDto)

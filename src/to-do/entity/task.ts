@@ -29,6 +29,9 @@ export class Task {
   @Column()
   indexNum: number;
 
+  @Column()
+  hexColorCode: string;
+
   @ManyToOne(() => Project, (project) => project.tasks)
   project: Project;
 

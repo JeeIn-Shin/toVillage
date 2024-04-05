@@ -42,6 +42,7 @@ export class TodosService {
           done: subtask.done,
           deadline: subtask.deadline,
           indexNum: subtask.indexNum,
+          hexColorCode: subtask.hexColorCode,
         }));
 
         const processedTask = {
@@ -51,6 +52,7 @@ export class TodosService {
           deadline: task.deadline,
           indexNum: task.indexNum,
           subtasks: processedSubtasks,
+          hexColorCode: task.hexColorCode,
         };
 
         processedTasks.push(processedTask);
@@ -60,7 +62,7 @@ export class TodosService {
       todos.push({
         id: project.id,
         toDo: project.toDo,
-        done: project.done,
+        hexColorCode: project.hexColorCode,
         tasks: processedTasks,
       });
     }
@@ -68,8 +70,6 @@ export class TodosService {
     return todos;
   }
 
-  //프로젝트 개별 조회 - project task subtask id로 묶어서 조회해야함
-  //해당 프로젝트 id를 가지고 있는 project task subtask entity를 모두 가져와야함
   async getByTodosId(projectId: number): Promise<TodoDto[] | any | null> {
     const project = await this.ProjectsRepository.find({
       where: { id: projectId },
@@ -98,6 +98,7 @@ export class TodosService {
         done: subtask.done,
         deadline: subtask.deadline,
         indexNum: subtask.indexNum,
+        hexColorCode: subtask.hexColorCode,
       }));
 
       const processedTask = {
@@ -106,6 +107,7 @@ export class TodosService {
         done: task.done,
         deadline: task.deadline,
         indexNum: task.indexNum,
+        hexColorCode: task.hexColorCode,
         subtasks: processedSubtasks,
       };
 
@@ -115,21 +117,19 @@ export class TodosService {
     todos.push({
       id: project[0].id,
       toDo: project[0].toDo,
-      done: project[0].done,
+      hexColorCode: project[0].hexColorCode,
       tasks: processedTasks,
     });
 
     return todos;
   }
 
-  //만약 하나만 추가한다면?? ex, project만 생성한다던가...
-  //현재는 project, task, subtask 모두 동시에 추가해야함
-  //어떻게 짜야하지?
   async addNewTodo(newEntity: CreateTodoDto): Promise<any> {
     //parent가 들어온게 없다면, project 생성
     if (newEntity.parentId === undefined) {
       const newProject = this.ProjectsRepository.create({
         toDo: newEntity.toDo,
+        hexColorCode: newEntity.hexColorCode,
       });
 
       return await this.ProjectsRepository.save(newProject);
@@ -139,6 +139,11 @@ export class TodosService {
       //Task Entity에서 해당 parentId를 가지고 있는 Task(s)가 있는지 먼저 조회
       //Task가 없다면 => indexNum = 1024
       //Task(s)가 이미 존재한다면 indexNum = Task(s) 개수 * 1024
+      const parentHexColor = await this.ProjectsRepository.find({
+        where: { id: newEntity.parentId },
+        select: ['hexColorCode'],
+      });
+
       const taskCount = await this.TasksRepository.find({
         where: { projectId: newEntity.parentId },
       });
@@ -149,6 +154,7 @@ export class TodosService {
           toDo: newEntity.toDo,
           deadline: newEntity.deadline,
           indexNum: 1024,
+          hexColorCode: parentHexColor[0].hexColorCode,
         });
 
         return await this.TasksRepository.save(newTask);
@@ -158,6 +164,7 @@ export class TodosService {
           toDo: newEntity.toDo,
           deadline: newEntity.deadline,
           indexNum: taskCount.length * 1024,
+          hexColorCode: parentHexColor[0].hexColorCode,
         });
 
         return await this.TasksRepository.save(newTask);
@@ -165,6 +172,11 @@ export class TodosService {
     }
     //parent가 2000000이상, 5999999 이하의 범위라면 subtask 생성
     if (newEntity.parentId >= 2000000 && newEntity.parentId <= 5999999) {
+      const parentHexColor = await this.TasksRepository.find({
+        where: { id: newEntity.parentId },
+        select: ['hexColorCode'],
+      });
+
       const grandParentId = await this.TasksRepository.find({
         where: { id: newEntity.parentId },
         select: ['projectId'],
@@ -183,6 +195,7 @@ export class TodosService {
           toDo: newEntity.toDo,
           deadline: newEntity.deadline,
           indexNum: 1024,
+          hexColorCode: parentHexColor[0].hexColorCode,
         });
 
         return await this.SubTasksRepository.save(newSubTask);
@@ -193,6 +206,7 @@ export class TodosService {
           toDo: newEntity.toDo,
           deadline: newEntity.deadline,
           indexNum: subTaskCount.length * 1024,
+          hexColorCode: parentHexColor[0].hexColorCode,
         });
 
         return await this.SubTasksRepository.save(newSubTask);
@@ -200,42 +214,63 @@ export class TodosService {
     }
   }
 
-  async modifyTodo(
-    updatedTodo: UpdateTodoDto, //수정하고자하는 내용 -- 이름을 이렇게 짓는게 맞나?
-  ): Promise<UpdateTodoDto | null> {
-    //id 값을 따라, 어떤 테이블의 데이터를 수정할 건지 구분함
-    // project: 0,000,000~1,999,999
-    // task: 2,000,000~5,999,999
-    // subtask: 6,000,000~9,999,999
+  async modifyTodo(updatedTodo: UpdateTodoDto): Promise<UpdateTodoDto | null> {
     const targetId = updatedTodo.id;
-    //반환은 어떻게 하는게 좋을려나
-    //수정하자마자, 분기점에서 해당 (project id)를 가지고 있는 해당 todo table 데이터를 바로 return
     if (targetId <= 1999999) {
-      //1. 프로젝트 내용 자체를 수정하는 경우
-      await this.ProjectsRepository.createQueryBuilder()
-        .update(Project)
-        .set({
-          toDo: updatedTodo.toDo,
-          done: updatedTodo.done,
-        })
-        .where(`id = :id`, { id: targetId })
-        .execute();
+      const queryRunner = this.dataSource.createQueryRunner();
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+      try {
+        await queryRunner.manager
+          .createQueryBuilder()
+          .update(Project)
+          .set({
+            toDo: updatedTodo.toDo,
+            hexColorCode: updatedTodo.hexColorCode,
+          })
+          .where('id = :id', { id: targetId })
+          .execute();
 
-      const updatedData = await this.ProjectsRepository.find({
-        where: {
-          id: targetId,
-        },
-      });
+        // 프로젝트에 속한 task의 hexColorCode 업데이트
+        await queryRunner.manager
+          .createQueryBuilder()
+          .update(Task)
+          .set({ hexColorCode: updatedTodo.hexColorCode })
+          .where('projectId = :id', { id: targetId })
+          .execute();
 
-      const updatedProject: UpdateTodoDto = {
-        id: updatedData[0].id,
-        toDo: updatedData[0].toDo,
-        done: updatedData[0].done,
-        deadline: undefined,
-        indexNum: undefined,
-      };
+        // 프로젝트에 속한 subtask의 hexColorCode 업데이트
+        await queryRunner.manager
+          .createQueryBuilder()
+          .update(Subtask)
+          .set({
+            hexColorCode: updatedTodo.hexColorCode,
+          })
+          .where('projectId = :id', { id: targetId })
+          .execute();
+        await queryRunner.commitTransaction();
+      } catch (err) {
+        await queryRunner.rollbackTransaction();
+        throw err;
+      } finally {
+        await queryRunner.release();
+        const updatedData = await this.ProjectsRepository.find({
+          where: {
+            id: targetId,
+          },
+        });
 
-      return updatedProject;
+        const updatedProject: UpdateTodoDto = {
+          id: updatedData[0].id,
+          toDo: updatedData[0].toDo,
+          hexColorCode: updatedData[0].hexColorCode,
+          done: undefined,
+          deadline: undefined,
+          indexNum: undefined,
+        };
+
+        return updatedProject;
+      }
     }
     if (targetId >= 2000000 && targetId <= 5999999) {
       await this.TasksRepository.createQueryBuilder()
@@ -261,6 +296,7 @@ export class TodosService {
         done: updatedData[0].done,
         deadline: updatedData[0].deadline,
         indexNum: updatedData[0].indexNum,
+        hexColorCode: updatedData[0].hexColorCode,
       };
 
       return updatedTask;
@@ -289,6 +325,7 @@ export class TodosService {
         done: updatedData[0].done,
         deadline: updatedData[0].deadline,
         indexNum: updatedData[0].indexNum,
+        hexColorCode: updatedData[0].hexColorCode,
       };
 
       return updatedSubtask;
