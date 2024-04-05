@@ -51,8 +51,8 @@ export class TodosService {
           done: task.done,
           deadline: task.deadline,
           indexNum: task.indexNum,
-          subtasks: processedSubtasks,
           hexColorCode: task.hexColorCode,
+          subtasks: processedSubtasks,
         };
 
         processedTasks.push(processedTask);
