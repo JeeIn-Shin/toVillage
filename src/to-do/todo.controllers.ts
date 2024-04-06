@@ -51,17 +51,17 @@ export class TodosController {
   }
 
   @Delete(':id')
-  @Redirect('http://localhost:8080/to-do', 302)
+  @Redirect('http://localhost:3000/to-do', 302)
   async deleteTodo(@Param('id', ParseIntPipe) id: number): Promise<any> {
     const result = await this.todoService.deleteTodo(id);
     console.log('controller', result);
     if (result === 1) return;
     else if (result !== -1)
-      return { url: `http://localhost:8080/to-do/${result}` };
+      return { url: `http://localhost:3000/to-do/${result}` };
 
     return {
       statusCode: HttpStatus.FORBIDDEN,
-      url: `http://localhost:8080/to-do/${id}`,
+      url: `http://localhost:3000/to-do/${id}`,
     };
   }
 }
