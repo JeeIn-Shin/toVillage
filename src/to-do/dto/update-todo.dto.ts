@@ -15,6 +15,7 @@ export class UpdateTodoDto {
   @Max(9999999)
   id: number;
 
+  @IsOptional()
   @IsString()
   toDo: string;
 
@@ -32,7 +33,7 @@ export class UpdateTodoDto {
   @IsNumber()
   indexNum: number;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsHexColor()
   hexColorCode: string;
 }

@@ -45,6 +45,11 @@ export class TodosController {
     return this.todoService.modifyOrder(todo);
   }
 
+  @Put('done')
+  modifyDone(@Body() todo: UpdateTodoDto): Promise<TodoDto> {
+    return this.todoService.modifyDone(todo);
+  }
+
   @Delete(':id')
   @Redirect('http://localhost:8080/to-do', 302)
   async deleteTodo(@Param('id', ParseIntPipe) id: number): Promise<any> {

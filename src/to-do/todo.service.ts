@@ -295,8 +295,8 @@ export class TodosService {
         toDo: updatedData[0].toDo,
         done: updatedData[0].done,
         deadline: updatedData[0].deadline,
-        indexNum: updatedData[0].indexNum,
         hexColorCode: updatedData[0].hexColorCode,
+        indexNum: updatedData[0].indexNum,
       };
 
       return updatedTask;
@@ -324,8 +324,8 @@ export class TodosService {
         toDo: updatedData[0].toDo,
         done: updatedData[0].done,
         deadline: updatedData[0].deadline,
-        indexNum: updatedData[0].indexNum,
         hexColorCode: updatedData[0].hexColorCode,
+        indexNum: updatedData[0].indexNum,
       };
 
       return updatedSubtask;
@@ -421,14 +421,65 @@ export class TodosService {
     }
   }
 
-  //id에 따라 삭제범위가 달라짐
-  //project 삭제한다면 project에 딸린 task, subtask (3개의 entity)
-  //task를 삭제한다면 task에 속한 subtask (2개의 entity)
-  //subtask는 subtask만 (1개의 entity)
+  async modifyDone(updatedTodo: UpdateTodoDto): Promise<TodoDto> {
+    const targetId = updatedTodo.id;
 
-  //project의 경우 반환은 어떻게 하는게?
-  //전체 조회페이지로 가면 될까? -- http://localhost:8080/to-do (http://localhost:3000/to-do)
-  //그 외에는 특정 프로젝트 조회 페이지로 이동
+    if (targetId >= 2000000 && targetId <= 5999999) {
+      await this.TasksRepository.createQueryBuilder()
+        .update(Task)
+        .set({
+          done: updatedTodo.done,
+        })
+        .where(`id = :id`, { id: targetId })
+        .execute();
+
+      const updatedData = await this.TasksRepository.find({
+        where: {
+          id: targetId,
+        },
+      });
+
+      const updatedTask: UpdateTodoDto = {
+        id: updatedData[0].id,
+        toDo: updatedData[0].toDo,
+        done: updatedData[0].done,
+        deadline: updatedData[0].deadline,
+        hexColorCode: updatedData[0].hexColorCode,
+        indexNum: updatedData[0].indexNum,
+      };
+
+      return updatedTask;
+    }
+    if (targetId >= 6000000 && targetId <= 9999999) {
+      await this.SubTasksRepository.createQueryBuilder()
+        .update(Subtask)
+        .set({
+          done: updatedTodo.done,
+        })
+        .where(`id = :id`, { id: targetId })
+        .execute();
+
+      const updatedData = await this.SubTasksRepository.find({
+        where: {
+          id: targetId,
+        },
+      });
+
+      const updatedSubtask: UpdateTodoDto = {
+        id: updatedData[0].id,
+        toDo: updatedData[0].toDo,
+        done: updatedData[0].done,
+        deadline: updatedData[0].deadline,
+        hexColorCode: updatedData[0].hexColorCode,
+        indexNum: updatedData[0].indexNum,
+      };
+
+      return updatedSubtask;
+    }
+
+    return null;
+  }
+
   async deleteTodo(targetId: number): Promise<number> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
