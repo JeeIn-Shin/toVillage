@@ -3,7 +3,7 @@ import { Repository, DataSource } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Project, Task, Subtask } from './entity';
 import { TodoDto, CreateTodoDto, UpdateTodoDto } from './dto';
-import { DuplicateIndex } from 'src/utils';
+import { DuplicateIndex, classifyEntity } from 'src/utils';
 
 //project, project-task, project-task-subtask 3가지로 나누어야함
 @Injectable()
@@ -41,8 +41,8 @@ export class TodosService {
           toDo: subtask.toDo,
           done: subtask.done,
           deadline: subtask.deadline,
-          indexNum: subtask.indexNum,
           hexColorCode: subtask.hexColorCode,
+          indexNum: subtask.indexNum,
         }));
 
         const processedTask = {
@@ -50,8 +50,8 @@ export class TodosService {
           toDo: task.toDo,
           done: task.done,
           deadline: task.deadline,
-          indexNum: task.indexNum,
           hexColorCode: task.hexColorCode,
+          indexNum: task.indexNum,
           subtasks: processedSubtasks,
         };
 
@@ -70,63 +70,80 @@ export class TodosService {
     return todos;
   }
 
-  async getByTodosId(projectId: number): Promise<TodoDto[] | any | null> {
-    const project = await this.ProjectsRepository.find({
-      where: { id: projectId },
-      take: 1,
-    });
+  async getByTodosId(id: number): Promise<TodoDto[] | any | null> {
+    if (classifyEntity(id) === 'project') {
+      const project = await this.ProjectsRepository.find({
+        where: { id: id },
+        take: 1,
+      });
 
-    if (!project) return null;
+      if (!project) return null;
 
-    const todos = [];
+      const todos = [];
 
-    const tasks = await this.TasksRepository.find({
-      where: { projectId: projectId },
-      order: { indexNum: 'ASC' }, //내림차순 추가
-    });
-
-    const processedTasks = [];
-    for (const task of tasks) {
-      const subtasks = await this.SubTasksRepository.find({
-        where: { task: { id: task.id } },
+      const tasks = await this.TasksRepository.find({
+        where: { projectId: id },
         order: { indexNum: 'ASC' }, //내림차순 추가
       });
 
-      const processedSubtasks = subtasks.map((subtask) => ({
-        id: subtask.id,
-        toDo: subtask.toDo,
-        done: subtask.done,
-        deadline: subtask.deadline,
-        indexNum: subtask.indexNum,
-        hexColorCode: subtask.hexColorCode,
-      }));
+      const processedTasks = [];
+      for (const task of tasks) {
+        const subtasks = await this.SubTasksRepository.find({
+          where: { task: { id: task.id } },
+          order: { indexNum: 'ASC' }, //내림차순 추가
+        });
 
-      const processedTask = {
-        id: task.id,
-        toDo: task.toDo,
-        done: task.done,
-        deadline: task.deadline,
-        indexNum: task.indexNum,
-        hexColorCode: task.hexColorCode,
-        subtasks: processedSubtasks,
-      };
+        const processedSubtasks = subtasks.map((subtask) => ({
+          id: subtask.id,
+          toDo: subtask.toDo,
+          done: subtask.done,
+          deadline: subtask.deadline,
+          hexColorCode: subtask.hexColorCode,
+          indexNum: subtask.indexNum,
+        }));
 
-      processedTasks.push(processedTask);
+        const processedTask = {
+          id: task.id,
+          toDo: task.toDo,
+          done: task.done,
+          deadline: task.deadline,
+          hexColorCode: task.hexColorCode,
+          indexNum: task.indexNum,
+          subtasks: processedSubtasks,
+        };
+
+        processedTasks.push(processedTask);
+      }
+
+      todos.push({
+        id: project[0].id,
+        toDo: project[0].toDo,
+        hexColorCode: project[0].hexColorCode,
+        tasks: processedTasks,
+      });
+
+      return todos;
     }
+    if (classifyEntity(id) === 'task') {
+      const tasks = await this.TasksRepository.find({
+        where: { id: id },
+        take: 1,
+      });
 
-    todos.push({
-      id: project[0].id,
-      toDo: project[0].toDo,
-      hexColorCode: project[0].hexColorCode,
-      tasks: processedTasks,
-    });
+      if (!tasks) return null;
 
-    return todos;
+      const subtasks = await this.SubTasksRepository.find({
+        where: { taskId: id },
+        order: { indexNum: 'ASC' }, //내림차순 추가
+      });
+
+      return subtasks;
+    }
   }
 
   async addNewTodo(newEntity: CreateTodoDto): Promise<any> {
     //parent가 들어온게 없다면, project 생성
-    if (newEntity.parentId === undefined) {
+    if (classifyEntity(newEntity.parentId) === undefined) {
       const newProject = this.ProjectsRepository.create({
         toDo: newEntity.toDo,
         hexColorCode: newEntity.hexColorCode,
@@ -135,7 +152,7 @@ export class TodosService {
       return await this.ProjectsRepository.save(newProject);
     }
     //parent가 1999999 이하의 범위라면 task 생성
-    if (newEntity.parentId <= 1999999) {
+    if (classifyEntity(newEntity.parentId) === 'project') {
       //Task Entity에서 해당 parentId를 가지고 있는 Task(s)가 있는지 먼저 조회
       //Task가 없다면 => indexNum = 1024
       //Task(s)가 이미 존재한다면 indexNum = Task(s) 개수 * 1024
@@ -147,14 +164,14 @@ export class TodosService {
       const taskCount = await this.TasksRepository.find({
         where: { projectId: newEntity.parentId },
       });
-
+      console.log(taskCount.length);
       if (taskCount.length < 1) {
         const newTask = this.TasksRepository.create({
           projectId: newEntity.parentId,
           toDo: newEntity.toDo,
           deadline: newEntity.deadline,
-          indexNum: 1024,
           hexColorCode: parentHexColor[0].hexColorCode,
+          indexNum: 1024,
         });
 
         return await this.TasksRepository.save(newTask);
@@ -163,15 +180,15 @@ export class TodosService {
           projectId: newEntity.parentId,
           toDo: newEntity.toDo,
           deadline: newEntity.deadline,
-          indexNum: taskCount.length * 1024,
           hexColorCode: parentHexColor[0].hexColorCode,
+          indexNum: (taskCount.length + 1) * 1024,
         });
 
         return await this.TasksRepository.save(newTask);
       }
     }
     //parent가 2000000이상, 5999999 이하의 범위라면 subtask 생성
-    if (newEntity.parentId >= 2000000 && newEntity.parentId <= 5999999) {
+    if (classifyEntity(newEntity.parentId) === 'task') {
       const parentHexColor = await this.TasksRepository.find({
         where: { id: newEntity.parentId },
         select: ['hexColorCode'],
@@ -185,7 +202,7 @@ export class TodosService {
 
       //SubTask가 존재하는지 여기서 확인하는 절차를 가져야함
       const subTaskCount = await this.SubTasksRepository.find({
-        where: { projectId: newEntity.parentId },
+        where: { taskId: newEntity.parentId },
       });
 
       if (subTaskCount.length < 1) {
@@ -194,8 +211,8 @@ export class TodosService {
           taskId: newEntity.parentId,
           toDo: newEntity.toDo,
           deadline: newEntity.deadline,
-          indexNum: 1024,
           hexColorCode: parentHexColor[0].hexColorCode,
+          indexNum: 1024,
         });
 
         return await this.SubTasksRepository.save(newSubTask);
@@ -205,8 +222,8 @@ export class TodosService {
           taskId: newEntity.parentId,
           toDo: newEntity.toDo,
           deadline: newEntity.deadline,
-          indexNum: subTaskCount.length * 1024,
           hexColorCode: parentHexColor[0].hexColorCode,
+          indexNum: (subTaskCount.length + 1) * 1024,
         });
 
         return await this.SubTasksRepository.save(newSubTask);
@@ -216,7 +233,7 @@ export class TodosService {
 
   async modifyTodo(updatedTodo: UpdateTodoDto): Promise<UpdateTodoDto | null> {
     const targetId = updatedTodo.id;
-    if (targetId <= 1999999) {
+    if (classifyEntity(targetId) === 'project') {
       const queryRunner = this.dataSource.createQueryRunner();
       await queryRunner.connect();
       await queryRunner.startTransaction();
@@ -263,16 +280,16 @@ export class TodosService {
         const updatedProject: UpdateTodoDto = {
           id: updatedData[0].id,
           toDo: updatedData[0].toDo,
-          hexColorCode: updatedData[0].hexColorCode,
           done: undefined,
           deadline: undefined,
+          hexColorCode: updatedData[0].hexColorCode,
           indexNum: undefined,
         };
 
         return updatedProject;
       }
     }
-    if (targetId >= 2000000 && targetId <= 5999999) {
+    if (classifyEntity(targetId) === 'task') {
       await this.TasksRepository.createQueryBuilder()
         .update(Task)
         .set({
@@ -301,7 +318,7 @@ export class TodosService {
 
       return updatedTask;
     }
-    if (targetId >= 6000000 && targetId <= 9999999) {
+    if (classifyEntity(targetId) === 'subtask') {
       await this.SubTasksRepository.createQueryBuilder()
         .update(Subtask)
         .set({
@@ -336,9 +353,10 @@ export class TodosService {
 
   //변경된 indexNum 받아와서, 중복된 부분이 없다면 그대로 반영, 그게 아니라면 idx 재설정
   async modifyOrder(todo: UpdateTodoDto[]): Promise<TodoDto[] | null> {
+    console.log(todo[0].id);
     const targetId = todo[0].id;
 
-    if (targetId > 1999999 && targetId < 6000000) {
+    if (classifyEntity(targetId) === 'task') {
       if (DuplicateIndex.prototype.checkDuplicateIndexNum(todo)) {
         for (const item of todo) {
           await this.TasksRepository.createQueryBuilder()
@@ -378,7 +396,7 @@ export class TodosService {
         return this.getByTodosId(parentId[0].projectId);
       }
     }
-    if (targetId > 5999999 && targetId < 10000000) {
+    if (classifyEntity(targetId) === 'subtask') {
       if (DuplicateIndex.prototype.checkDuplicateIndexNum(todo)) {
         for (const item of todo) {
           await this.SubTasksRepository.createQueryBuilder()
@@ -390,14 +408,14 @@ export class TodosService {
 
         const parentId = await this.SubTasksRepository.find({
           where: { id: todo[0].id },
-          select: ['projectId'],
+          select: ['taskId'],
         });
 
-        return this.getByTodosId(parentId[0].projectId);
+        return this.getByTodosId(parentId[0].taskId);
       } else {
         const parentId = await this.SubTasksRepository.find({
           where: { id: todo[0].id },
-          select: ['projectId'],
+          select: ['taskId'],
           take: 1,
         });
 
@@ -416,7 +434,7 @@ export class TodosService {
             .where(`id = :id`, { id: item.id })
             .execute();
         }
-        return this.getByTodosId(parentId[0].projectId);
+        return this.getByTodosId(parentId[0].taskId);
       }
     }
   }
@@ -424,7 +442,7 @@ export class TodosService {
   async modifyDone(updatedTodo: UpdateTodoDto): Promise<TodoDto> {
     const targetId = updatedTodo.id;
 
-    if (targetId >= 2000000 && targetId <= 5999999) {
+    if (classifyEntity(targetId) === 'task') {
       await this.TasksRepository.createQueryBuilder()
         .update(Task)
         .set({
@@ -450,7 +468,7 @@ export class TodosService {
 
       return updatedTask;
     }
-    if (targetId >= 6000000 && targetId <= 9999999) {
+    if (classifyEntity(targetId) === 'subtask') {
       await this.SubTasksRepository.createQueryBuilder()
         .update(Subtask)
         .set({
@@ -484,7 +502,7 @@ export class TodosService {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
-    if (targetId <= 1999999) {
+    if (classifyEntity(targetId) === 'project') {
       //해당 데이터가 존재하는가?
       const check = await this.ProjectsRepository.find({
         where: { id: targetId },
@@ -537,7 +555,7 @@ export class TodosService {
       }
     }
 
-    if (targetId >= 2000000 && targetId <= 5999999) {
+    if (classifyEntity(targetId) === 'task') {
       const targetProjectId = await this.TasksRepository.find({
         where: { id: targetId },
         select: ['projectId'],
@@ -567,7 +585,7 @@ export class TodosService {
       }
     }
 
-    if (targetId >= 6000000 && targetId <= 9999999) {
+    if (classifyEntity(targetId) === 'subtask') {
       //subtask가 속한 project id 먼저 조회
       try {
         const targetProjectId = await this.SubTasksRepository.find({

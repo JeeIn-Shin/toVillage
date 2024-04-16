@@ -7,7 +7,6 @@ import {
   Param,
   Body,
   ParseIntPipe,
-  Redirect,
   HttpStatus,
 } from '@nestjs/common';
 import { TodosService } from './todo.service';
@@ -51,17 +50,17 @@ export class TodosController {
   }
 
   @Delete(':id')
-  @Redirect('http://localhost:3000/to-do', 302)
   async deleteTodo(@Param('id', ParseIntPipe) id: number): Promise<any> {
     const result = await this.todoService.deleteTodo(id);
-    console.log('controller', result);
-    if (result === 1) return;
-    else if (result !== -1)
-      return { url: `http://localhost:3000/to-do/${result}` };
+    if (result === 1) return null;
+    else if (result !== -1) return result;
 
     return {
-      statusCode: HttpStatus.FORBIDDEN,
-      url: `http://localhost:3000/to-do/${id}`,
+      statusCode: HttpStatus.OK,
+      detail: {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: `Invalid delete request`,
+      },
     };
   }
 }
