@@ -164,7 +164,7 @@ export class TodosService {
       const taskCount = await this.TasksRepository.find({
         where: { projectId: newEntity.parentId },
       });
-      console.log(taskCount.length);
+
       if (taskCount.length < 1) {
         const newTask = this.TasksRepository.create({
           projectId: newEntity.parentId,

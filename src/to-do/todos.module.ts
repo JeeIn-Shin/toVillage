@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Project, Task, Subtask } from './entity/index';
-import { TodosController } from './todo.controllers';
-import { TodosService } from './todo.service';
+import { TodosController } from './todos.controller';
+import { TodosService } from './todos.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Project, Task, Subtask])],

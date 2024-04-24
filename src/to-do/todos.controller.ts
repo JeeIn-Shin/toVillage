@@ -9,7 +9,7 @@ import {
   ParseIntPipe,
   HttpStatus,
 } from '@nestjs/common';
-import { TodosService } from './todo.service';
+import { TodosService } from './todos.service';
 //import { Task } from './entity';
 import { TodoDto, CreateTodoDto, UpdateTodoDto } from './dto';
 
