@@ -10,6 +10,7 @@ export class UserController {
   async loginUser(@Body() Auth: AuthUserDto): Promise<any> {
     const result = await this.userService.loginUser(Auth);
 
+    //-1 이면 아이디 틀린거, -2 면 비밀번호 틀린거
     if (result === -1 || result === -2)
       return {
         statusCode: HttpStatus.OK,

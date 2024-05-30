@@ -17,7 +17,7 @@ export class UserService {
       where: { email: Auth.email },
     });
 
-    if (userInfo === null) return -1;
+    if (userInfo[0] === undefined) return -1;
     if (Auth.pwd !== userInfo[0].pwd) return -2;
 
     const filteredUserInfo = userInfo.map((user) => {
