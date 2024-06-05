@@ -10,7 +10,6 @@ export class AuthController {
   @UseGuards(LocalAuthGuard)
   @Post('login')
   async loginUser(@Body() Auth: AuthUserDto): Promise<any> {
-    console.log(`in Auth controller ${JSON.stringify(Auth)}`);
     return this.authService.loginUser(Auth);
   }
 

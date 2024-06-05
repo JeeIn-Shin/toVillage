@@ -27,11 +27,10 @@ export class AuthService {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { email, pwd } = Auth;
     const user = await this.usersService.findUser(email);
-    console.log(user);
     if (user && (await bcrypt.compare(pwd, user.hashedPwd))) {
       const payload = { sub: user.id, username: user.username };
       return {
-        acces_token: this.jwtService.sign(payload),
+        access_token: this.jwtService.sign(payload),
       };
     }
     throw new UnauthorizedException();

@@ -14,7 +14,6 @@ export class UserService {
     const user = await this.UsersRepository.find({
       where: { email: email },
     });
-    console.log(user[0]);
     return user[0];
   }
 

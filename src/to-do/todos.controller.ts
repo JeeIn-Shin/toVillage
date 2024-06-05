@@ -8,12 +8,13 @@ import {
   Body,
   ParseIntPipe,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import { TodosService } from './todos.service';
-//import { Task } from './entity';
 import { TodoDto, CreateTodoDto, UpdateTodoDto } from './dto';
+import { JwtAuthGuard } from 'src/auth/guard';
 
-//project, project-task, project-task-subtask 3가지로 나누어야함
+@UseGuards(JwtAuthGuard)
 @Controller('to-do')
 export class TodosController {
   constructor(private todoService: TodosService) {}
