@@ -6,4 +6,5 @@ export default () => ({
     user: process.env.DATABASE_USER,
     pwd: String(process.env.DATABASE_PWD),
   },
+  secret: process.env.JWT_SECRET_KEY,
 });

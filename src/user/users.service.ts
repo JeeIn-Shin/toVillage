@@ -2,9 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entity/user';
-import { AuthUserDto } from './dto/index';
 
-//project, project-task, project-task-subtask 3가지로 나누어야함
 @Injectable()
 export class UserService {
   constructor(
@@ -12,19 +10,16 @@ export class UserService {
     private UsersRepository: Repository<User>,
   ) {}
 
-  async loginUser(Auth: AuthUserDto): Promise<any> {
-    const userInfo = await this.UsersRepository.find({
-      where: { email: Auth.email },
+  async findUser(email: string): Promise<any> {
+    const user = await this.UsersRepository.find({
+      where: { email: email },
     });
+    console.log(user[0]);
+    return user[0];
+  }
 
-    if (userInfo[0] === undefined) return -1;
-    if (Auth.pwd !== userInfo[0].pwd) return -2;
-
-    const filteredUserInfo = userInfo.map((user) => {
-      const { pwd, ...rest } = user;
-      return rest;
-    });
-
-    return filteredUserInfo;
+  async createUser(user: Partial<User>): Promise<void> {
+    const newUser = this.UsersRepository.create(user);
+    await this.UsersRepository.save(newUser);
   }
 }

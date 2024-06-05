@@ -9,6 +9,7 @@ import { User } from './user/entity/user';
 import { LoggerMiddleware } from 'middleware/logger.middleware';
 import config from '../config/configuration';
 import { UserModule } from './user/users.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { UserModule } from './user/users.module';
     }),
     TodosModule,
     UserModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,6 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, Unique } from 'typeorm';
 
 @Entity()
+@Unique(['email'])
 export class User {
   @PrimaryGeneratedColumn('uuid')
   uuid: string;
@@ -9,11 +10,11 @@ export class User {
   email: string;
 
   @Column()
-  pwd: string;
+  hashedPwd: string;
 
-  @Column()
+  @Column({ default: 'tester' })
   username: string;
 
-  @Column()
+  @Column({ default: 'src/img/1.jpg' })
   profileImg: string;
 }
