@@ -1,20 +1,10 @@
-import {
-  IsNotEmpty,
-  IsString,
-  IsEmail,
-  MinLength,
-  IsOptional,
-} from 'class-validator';
+import { IsString, MinLength, IsOptional, Matches } from 'class-validator';
 
 export class UpdateUserDto {
-  @IsNotEmpty()
-  @IsEmail()
-  email: string;
-
   @IsOptional()
   @IsString()
   @MinLength(10)
-  pwd: string;
+  hashedPwd: string;
 
   @IsOptional()
   @IsString()
@@ -22,5 +12,10 @@ export class UpdateUserDto {
 
   @IsOptional()
   @IsString()
+  @Matches(/^\/src\//, { message: 'profileImg must start with "/src/"' })
   profileImg: string;
+
+  @IsOptional()
+  @IsString()
+  currentHashedRefreshToken: string;
 }

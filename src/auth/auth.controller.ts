@@ -1,7 +1,14 @@
-import { Controller, Post, Body, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  UnauthorizedException,
+  Request,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthUserDto } from '../auth/dto/auth-user.dto';
-import { LocalAuthGuard } from './guard';
+import { LocalAuthGuard, JwtAuthGuard } from './guard';
 
 @Controller('auth')
 export class AuthController {
@@ -10,7 +17,27 @@ export class AuthController {
   @UseGuards(LocalAuthGuard)
   @Post('login')
   async loginUser(@Body() Auth: AuthUserDto): Promise<any> {
-    return this.authService.loginUser(Auth);
+    const user = await this.authService.validateUser(Auth);
+
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+
+    const tokens = await this.authService.loginUser(user);
+
+    await this.authService.setCurrentRefreshToken(
+      user.uuid,
+      tokens.refresh_token,
+    );
+
+    return tokens;
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('logout')
+  async logoutUser(@Request() req) {
+    const accessToken = req.headers.authorization.split(' ')[1];
+    return await this.authService.logoutUser(accessToken);
   }
 
   @Post('signup')
