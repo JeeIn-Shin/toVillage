@@ -3,13 +3,15 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { TodosModule } from './to-do/todos.module';
-import { Project, Task, Subtask } from './to-do/entity';
-import { User } from './user/entity/user';
 import { LoggerMiddleware } from 'middleware/logger.middleware';
 import config from '../config/configuration';
+import { Project, Task, Subtask } from './to-do/entity';
+import { User } from './user/entity/user';
+import { Points, UsageLocation } from './points/entity';
 import { UserModule } from './user/users.module';
 import { AuthModule } from './auth/auth.module';
+import { PointsModule } from './points/points.module';
+import { TodosModule } from './to-do/todos.module';
 
 @Module({
   imports: [
@@ -24,7 +26,7 @@ import { AuthModule } from './auth/auth.module';
       username: config().database.user,
       password: config().database.pwd,
       database: 'tovillage',
-      entities: [Project, Task, Subtask, User],
+      entities: [Project, Task, Subtask, User, Points, UsageLocation],
       //true시 QueryFailedError: Encoding not recognized: 'undefined' (searched as: 'undefined') 에러 발생
       //synchronize가 대체 무슨 옵션인가
       synchronize: true,
@@ -33,6 +35,7 @@ import { AuthModule } from './auth/auth.module';
     TodosModule,
     UserModule,
     AuthModule,
+    PointsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

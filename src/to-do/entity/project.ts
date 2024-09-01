@@ -1,6 +1,13 @@
 // project.entity.ts
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToMany,
+  ManyToOne,
+} from 'typeorm';
 import { Task } from './task';
+import { User } from 'src/user/entity/user';
 
 @Entity()
 export class Project {
@@ -15,4 +22,7 @@ export class Project {
 
   @OneToMany(() => Task, (task) => task.project)
   tasks: Task[];
+
+  @ManyToOne(() => User, (user) => user.uuid)
+  uuid: User;
 }

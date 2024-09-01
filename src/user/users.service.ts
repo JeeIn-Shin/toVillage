@@ -37,6 +37,17 @@ export class UserService {
     return user;
   }
 
+  async getUuidbyname(name: string): Promise<any> {
+    const user = await this.UsersRepository.find({
+      where: { username: name },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user[0].uuid;
+  }
+
   async createUser(user: Partial<User>): Promise<void> {
     const checkUser = this.getUserbyEmail(user.email);
     if (checkUser) {

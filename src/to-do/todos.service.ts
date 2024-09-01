@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Project, Task, Subtask } from './entity';
 import { TodoDto, CreateTodoDto, UpdateTodoDto } from './dto';
 import { DuplicateIndex, classifyEntity } from 'src/utils';
+import { User } from 'src/user/entity/user';
 
 //project, project-task, project-task-subtask 3가지로 나누어야함
 @Injectable()
@@ -141,12 +142,13 @@ export class TodosService {
     }
   }
 
-  async addNewTodo(newEntity: CreateTodoDto): Promise<any> {
+  async addNewTodo(newEntity: CreateTodoDto, name: User): Promise<any> {
     //parent가 들어온게 없다면, project 생성
     if (classifyEntity(newEntity.parentId) === undefined) {
       const newProject = this.ProjectsRepository.create({
         toDo: newEntity.toDo,
         hexColorCode: newEntity.hexColorCode,
+        uuid: name,
       });
 
       return await this.ProjectsRepository.save(newProject);

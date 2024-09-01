@@ -13,6 +13,7 @@ import {
 import { TodosService } from './todos.service';
 import { TodoDto, CreateTodoDto, UpdateTodoDto } from './dto';
 import { JwtAuthGuard } from 'src/auth/guard';
+import { User } from 'src/user/entity/user';
 
 @UseGuards(JwtAuthGuard)
 @Controller('to-do')
@@ -31,8 +32,8 @@ export class TodosController {
   }
 
   @Post('')
-  addNewTodo(@Body() todo: CreateTodoDto): Promise<any> {
-    return this.todoService.addNewTodo(todo);
+  addNewTodo(@Body() todo: CreateTodoDto, name: User): Promise<any> {
+    return this.todoService.addNewTodo(todo, name);
   }
 
   @Put('')
