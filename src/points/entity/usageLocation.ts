@@ -1,23 +1,15 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  OneToOne,
-  JoinColumn,
-} from 'typeorm';
+import { Entity, Column, OneToOne, JoinColumn, PrimaryColumn } from 'typeorm';
 import { Points } from './points';
 @Entity()
 export class UsageLocation {
-  @PrimaryGeneratedColumn('increment')
-  id: number;
-
   @Column({ nullable: false })
   name: string; // 사용처 이름
 
   @Column({ nullable: false })
   location: string;
 
+  @PrimaryColumn()
   @OneToOne(() => Points)
   @JoinColumn()
-  usageLocation: Points;
+  id: number;
 }

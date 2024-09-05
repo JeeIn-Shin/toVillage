@@ -142,13 +142,13 @@ export class TodosService {
     }
   }
 
-  async addNewTodo(newEntity: CreateTodoDto, name: User): Promise<any> {
+  async addNewTodo(newEntity: CreateTodoDto, user: User): Promise<any> {
     //parent가 들어온게 없다면, project 생성
     if (classifyEntity(newEntity.parentId) === undefined) {
       const newProject = this.ProjectsRepository.create({
         toDo: newEntity.toDo,
         hexColorCode: newEntity.hexColorCode,
-        uuid: name,
+        uuid: user,
       });
 
       return await this.ProjectsRepository.save(newProject);

@@ -27,5 +27,5 @@ export class Points {
   createdAt: Date;
 
   @ManyToOne(() => User, (user) => user.uuid)
-  uuid: User;
+  user: User;
 }
