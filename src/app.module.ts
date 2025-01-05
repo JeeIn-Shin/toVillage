@@ -12,6 +12,9 @@ import { UserModule } from './user/users.module';
 import { AuthModule } from './auth/auth.module';
 import { PointsModule } from './points/points.module';
 import { TodosModule } from './to-do/todos.module';
+import { VillageController } from './village/village.controller';
+import { VillageService } from './village/village.service';
+import { VillageModule } from './village/village.module';
 
 @Module({
   imports: [
@@ -36,9 +39,10 @@ import { TodosModule } from './to-do/todos.module';
     UserModule,
     AuthModule,
     PointsModule,
+    VillageModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [AppController, VillageController],
+  providers: [AppService, VillageService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
