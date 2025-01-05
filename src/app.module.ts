@@ -8,12 +8,11 @@ import config from '../config/configuration';
 import { Project, Task, Subtask } from './to-do/entity';
 import { User } from './user/entity/user';
 import { Points, UsageLocation } from './points/entity';
+import { UserBuildings, BuildingTemplate} from './village/entity';
 import { UserModule } from './user/users.module';
 import { AuthModule } from './auth/auth.module';
 import { PointsModule } from './points/points.module';
 import { TodosModule } from './to-do/todos.module';
-import { VillageController } from './village/village.controller';
-import { VillageService } from './village/village.service';
 import { VillageModule } from './village/village.module';
 
 @Module({
@@ -29,7 +28,7 @@ import { VillageModule } from './village/village.module';
       username: config().database.user,
       password: config().database.pwd,
       database: 'tovillage',
-      entities: [Project, Task, Subtask, User, Points, UsageLocation],
+      entities: [Project, Task, Subtask, User, Points, UsageLocation, UserBuildings, BuildingTemplate],
       //true시 QueryFailedError: Encoding not recognized: 'undefined' (searched as: 'undefined') 에러 발생
       //synchronize가 대체 무슨 옵션인가
       synchronize: true,
@@ -41,8 +40,8 @@ import { VillageModule } from './village/village.module';
     PointsModule,
     VillageModule,
   ],
-  controllers: [AppController, VillageController],
-  providers: [AppService, VillageService],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
